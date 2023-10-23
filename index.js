@@ -6,15 +6,14 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express());
+app.use(express.json());
 
 
 
 // automotive-brand-shop
 // nWh1pQayeJuDnUGg
 
-console.log(process.env.DB_USER);
-console.log(process.env.DB_PASS);
+
 
 
 
@@ -35,7 +34,14 @@ async function run() {
     await client.connect();
 
 
+    const carCollection = client.db('carDB').collection('car');
 
+    app.post('/car', async (req, res) => {
+        const newCar = req.body;
+        console.log(newCar);
+        const result = await carCollection.insertOne(newCar);
+        res.send(result);
+    });
 
 
     // Send a ping to confirm a successful connection
