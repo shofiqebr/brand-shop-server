@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const cors = require('cors');
 const app = express();
@@ -31,7 +31,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
 
     const carCollection = client.db('carDB').collection('car');
@@ -49,6 +49,18 @@ async function run() {
     res.send(result);
 })
 
+app.get('/https://automotive-brand-shop-serverside-4h7p7nxyj.vercel.app/getCart', async (req, res) => {
+  try {
+    const cartCollection = client.db('carDB').collection('cart');
+    const cartItems = await cartCollection.find().toArray();
+    res.json(cartItems);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching cart items' });
+  }
+});
+
+
 
 
     app.post('/car', async (req, res) => {
@@ -58,9 +70,42 @@ async function run() {
         res.send(result);
     });
 
+    app.post('/car/myCart', async (req, res) => {
+      const newCar = req.body;
+      console.log(newCar);
+      const result = await carCollection.insertOne(newCar);
+      res.send(result);
+  })
+
+
+  app.put('/car/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) }
+    const options = { upsert: true };
+    const updatedCar = req.body;
+
+    const car = {
+        $set: {
+            name: updatedCar.name,
+            brandName: updatedCar.brandName,
+            price: updatedCar.price,
+            rating: updatedCar.rating,
+            type: updatedCar.type,
+          
+            photo: updatedCar.photo,
+        }
+    }
+
+    const result = await carCollection.updateOne(filter, car, options);
+    res.send(result);
+})
+
+
+
+
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
